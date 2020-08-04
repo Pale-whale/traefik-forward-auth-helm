@@ -1,0 +1,10 @@
+{{- range $name, $contents := .Values.middlewares -}}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $name }}
+spec:
+  {{- $contents | toYaml | nindent 2 }}
+
+{{- end }}

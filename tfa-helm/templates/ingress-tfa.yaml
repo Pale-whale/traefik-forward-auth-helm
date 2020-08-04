@@ -1,0 +1,22 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ include "tfa.fullname" . }}
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+  labels:
+    {{- include "tfa.labels" . | nindent 4 }}
+spec:
+  rules:
+  {{- range .Values.ingress.routes }}
+  - host: {{ .host }}
+    http:
+      paths:
+      - backend:
+          serviceName: {{ include "tfa.fullname" $ }}
+          servicePort: {{ $.Values.service.port }}
+        path: {{ .path }}
+  {{- end }}
+
+{{- end -}}

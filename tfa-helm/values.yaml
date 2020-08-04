@@ -1,0 +1,103 @@
+# Default values for traefik-forward-auth.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# override .Chart.AppVersion, use carefully
+#appVersion: 0.2.0
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: thomseddon/traefik-forward-auth:2
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+env:
+  variables:
+    DEFAULT_PROVIDER: oidc
+    PROVIDERS_OIDC_CLIENT_ID: sso
+    PROVIDERS_OIDC_ISSUER_URL: ""
+
+    LOG_LEVEL: info
+    AUTH_HOST: auth.example.fr
+    COOKIE_DOMAIN: example.fr
+    INSECURE_COOKIE: "false"
+    URL_PATH: "/_oauth"
+    DEFAULT_ACTION: "auth"
+
+  secrets:
+    - PROVIDERS_OIDC_CLIENT_SECRET
+    - SECRET
+
+# Used to implement rules
+rules: {}
+# you can add as many rules as you want formatted as below
+# you should consider adding rules in terraform instead of here
+# name:
+#   rule: Host(`example.aodap-staging.fr`)  | A rule to match traefik rule parser
+#   action: auth                            | action can be auth or allow
+#   groups: all                             | list of group
+
+middlewares:
+  sso-forward-auth:
+    forwardAuth:
+      # Don't forget to change this with the correct name for your svc
+      address: http://traefik-sso-forward-auth.svc.cluster.local:4181
+      authResponseHeaders:
+        - "X-Forwarded-User"
+      trustForwardHeader: false
+
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+# limits:
+#   cpu: 100m
+#   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+ingress:
+  enabled: false
+  annotations:
+    # Don't forget to change this with namespace-name@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-sso-forward-auth@kubernetescrd
+
+  routes:
+  - host: auth.example.fr
+    path: /
+
+service:
+  type: ClusterIP
+  port: 4181
+  name: web
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
