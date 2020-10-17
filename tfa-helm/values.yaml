@@ -91,7 +91,8 @@ ingress:
 
 service:
   type: ClusterIP
-  port: 4181
+  port: 80
+  targetPort: 4181
   name: web
 
 serviceAccount:
